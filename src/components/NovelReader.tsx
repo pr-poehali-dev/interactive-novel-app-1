@@ -336,22 +336,21 @@ export default function NovelReader() {
           <div className="relative order-2 lg:order-1 flex flex-col bg-background" style={{ zIndex: 10 }}>
             <div className="wave-divider hidden lg:block">
               <svg 
-                viewBox="0 0 100 1000" 
+                viewBox="0 0 200 1000" 
                 preserveAspectRatio="none" 
                 className="h-full w-full"
               >
                 <path 
                   d="M0 0 
-                     C 25 25, 75 75, 0 100
-                     C 25 125, 75 175, 0 200
-                     C 25 225, 75 275, 0 300
-                     C 25 325, 75 375, 0 400
-                     C 25 425, 75 475, 0 500
-                     C 25 525, 75 575, 0 600
-                     C 25 625, 75 675, 0 700
-                     C 25 725, 75 775, 0 800
-                     C 25 825, 75 875, 0 900
-                     C 25 925, 75 975, 0 1000
+                     Q 80 60, 0 120
+                     Q 100 180, 0 240
+                     Q 90 300, 0 360
+                     Q 85 420, 0 480
+                     Q 95 540, 0 600
+                     Q 80 660, 0 720
+                     Q 90 780, 0 840
+                     Q 85 900, 0 960
+                     Q 100 1000, 0 1000
                      L 0 0 Z" 
                   fill="hsl(var(--background))"
                 />

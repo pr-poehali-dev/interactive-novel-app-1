@@ -73,12 +73,12 @@
   right: -2px;
   top: 0;
   bottom: 0;
-  width: 120px;
+  width: 200px;
   overflow: visible;
   z-index: 20;
   pointer-events: none;
 }
 
 .wave-divider path {
-  filter: drop-shadow(2px 0 8px rgba(0, 0, 0, 0.3));
+  filter: drop-shadow(4px 0 12px rgba(0, 0, 0, 0.4));
 }
