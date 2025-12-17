@@ -219,9 +219,22 @@ export default function NovelReader() {
       </header>
 
       <main className="pt-16">
-        <div className="grid lg:grid-cols-2 min-h-[calc(100vh-4rem)]">
-          <div className="relative order-2 lg:order-1 flex flex-col">
-            <ScrollArea className="flex-1 p-6 lg:p-12">
+        <div className="grid lg:grid-cols-[1fr_1.2fr] min-h-[calc(100vh-4rem)] relative">
+          <div className="relative order-2 lg:order-1 flex flex-col z-10 bg-background">
+            <div className="absolute -right-1 top-0 bottom-0 w-32 hidden lg:block overflow-hidden">
+              <svg 
+                viewBox="0 0 100 1000" 
+                preserveAspectRatio="none" 
+                className="h-full w-full"
+                style={{ transform: 'translateX(1px)' }}
+              >
+                <path 
+                  d="M0 0 Q50 50 0 100 T0 200 T0 300 T0 400 T0 500 T0 600 T0 700 T0 800 T0 900 T0 1000 L0 0 Z" 
+                  fill="hsl(var(--background))" 
+                />
+              </svg>
+            </div>
+            <ScrollArea className="flex-1 p-6 lg:p-12 lg:pr-24">
               <div className="max-w-2xl mx-auto animate-fade-in">
                 <h2 className="text-3xl font-bold mb-8">{episode.title}</h2>
                 
@@ -289,12 +302,12 @@ export default function NovelReader() {
           </div>
 
           <div 
-            className="relative order-1 lg:order-2 h-64 lg:h-auto bg-cover bg-center sticky top-16 animate-fade-in"
+            className="relative order-1 lg:order-2 h-64 lg:h-auto bg-cover bg-center lg:sticky lg:top-16 animate-fade-in overflow-hidden"
             style={{ 
-              backgroundImage: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(${paragraph.image || episode.backgroundImage})` 
+              backgroundImage: `linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)), url(${paragraph.image || episode.backgroundImage})` 
             }}
           >
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/20" />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/10" />
           </div>
         </div>
       </main>
