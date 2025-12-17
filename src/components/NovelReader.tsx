@@ -106,10 +106,8 @@ export default function NovelReader() {
     }
   ]);
 
-  const [editingEpisode, setEditingEpisode] = useState<Episode | null>(null);
-  const [newParagraphType, setNewParagraphType] = useState<'text' | 'dialog'>('text');
-  const [newParagraphContent, setNewParagraphContent] = useState('');
-  const [newParagraphImage, setNewParagraphImage] = useState('');
+  const [editingEpisodeId, setEditingEpisodeId] = useState<string | null>(null);
+  const [draggedParagraphId, setDraggedParagraphId] = useState<string | null>(null);
 
   const characters: Character[] = [
     {
@@ -136,6 +134,7 @@ export default function NovelReader() {
 
   const episode = episodes[currentEpisode];
   const paragraph = episode.paragraphs[currentParagraph];
+  const editingEpisode = episodes.find(e => e.id === editingEpisodeId);
 
   const getCharacter = (id: string) => characters.find(c => c.id === id);
 
@@ -175,13 +174,13 @@ export default function NovelReader() {
 
   const addNewEpisode = () => {
     const newEpisode: Episode = {
-      id: `${episodes.length + 1}`,
+      id: `${Date.now()}`,
       title: `Глава ${episodes.length + 1}. Новая глава`,
       backgroundImage: 'https://cdn.poehali.dev/files/u3875968173_quote_background_close-up_of_japanese_lanterns_wi_7076d7a0-fe3b-4374-aa35-93e85d6c7fe8_0.png',
       paragraphs: []
     };
     setEpisodes([...episodes, newEpisode]);
-    setEditingEpisode(newEpisode);
+    setEditingEpisodeId(newEpisode.id);
   };
 
   const updateEpisode = (episodeId: string, updates: Partial<Episode>) => {
@@ -192,17 +191,15 @@ export default function NovelReader() {
 
   const deleteEpisode = (episodeId: string) => {
     setEpisodes(episodes.filter(ep => ep.id !== episodeId));
-    setEditingEpisode(null);
+    setEditingEpisodeId(null);
   };
 
-  const addParagraphToEpisode = (episodeId: string) => {
-    if (!newParagraphContent.trim()) return;
-
+  const addParagraph = (episodeId: string, type: 'text' | 'dialog') => {
     const newParagraph: Paragraph = {
-      id: `${episodeId}-${Date.now()}`,
-      type: newParagraphType,
-      content: newParagraphType === 'text' ? newParagraphContent : [],
-      image: newParagraphImage || undefined
+      id: `${Date.now()}`,
+      type,
+      content: type === 'text' ? 'Новый параграф...' : [],
+      image: undefined
     };
 
     const updatedEpisodes = episodes.map(ep => {
@@ -216,8 +213,21 @@ export default function NovelReader() {
     });
 
     setEpisodes(updatedEpisodes);
-    setNewParagraphContent('');
-    setNewParagraphImage('');
+  };
+
+  const updateParagraph = (episodeId: string, paragraphId: string, updates: Partial<Paragraph>) => {
+    const updatedEpisodes = episodes.map(ep => {
+      if (ep.id === episodeId) {
+        return {
+          ...ep,
+          paragraphs: ep.paragraphs.map(p => 
+            p.id === paragraphId ? { ...p, ...updates } : p
+          )
+        };
+      }
+      return ep;
+    });
+    setEpisodes(updatedEpisodes);
   };
 
   const deleteParagraph = (episodeId: string, paragraphId: string) => {
@@ -231,6 +241,37 @@ export default function NovelReader() {
       return ep;
     });
     setEpisodes(updatedEpisodes);
+  };
+
+  const moveParagraph = (episodeId: string, fromIndex: number, toIndex: number) => {
+    const updatedEpisodes = episodes.map(ep => {
+      if (ep.id === episodeId) {
+        const newParagraphs = [...ep.paragraphs];
+        const [moved] = newParagraphs.splice(fromIndex, 1);
+        newParagraphs.splice(toIndex, 0, moved);
+        return { ...ep, paragraphs: newParagraphs };
+      }
+      return ep;
+    });
+    setEpisodes(updatedEpisodes);
+  };
+
+  const handleDragStart = (paragraphId: string) => {
+    setDraggedParagraphId(paragraphId);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (episodeId: string, targetIndex: number) => {
+    if (!draggedParagraphId || !editingEpisode) return;
+    
+    const sourceIndex = editingEpisode.paragraphs.findIndex(p => p.id === draggedParagraphId);
+    if (sourceIndex !== -1) {
+      moveParagraph(episodeId, sourceIndex, targetIndex);
+    }
+    setDraggedParagraphId(null);
   };
 
   return (
@@ -292,21 +333,31 @@ export default function NovelReader() {
 
       <main className="pt-16">
         <div className="grid lg:grid-cols-[1fr_1.2fr] min-h-[calc(100vh-4rem)] relative">
-          <div className="relative order-2 lg:order-1 flex flex-col z-10 bg-background">
-            <div className="absolute -right-1 top-0 bottom-0 w-32 hidden lg:block overflow-hidden">
+          <div className="relative order-2 lg:order-1 flex flex-col bg-background" style={{ zIndex: 10 }}>
+            <div className="wave-divider hidden lg:block">
               <svg 
                 viewBox="0 0 100 1000" 
                 preserveAspectRatio="none" 
                 className="h-full w-full"
-                style={{ transform: 'translateX(1px)' }}
               >
                 <path 
-                  d="M0 0 Q50 50 0 100 T0 200 T0 300 T0 400 T0 500 T0 600 T0 700 T0 800 T0 900 T0 1000 L0 0 Z" 
-                  fill="hsl(var(--background))" 
+                  d="M0 0 
+                     C 25 25, 75 75, 0 100
+                     C 25 125, 75 175, 0 200
+                     C 25 225, 75 275, 0 300
+                     C 25 325, 75 375, 0 400
+                     C 25 425, 75 475, 0 500
+                     C 25 525, 75 575, 0 600
+                     C 25 625, 75 675, 0 700
+                     C 25 725, 75 775, 0 800
+                     C 25 825, 75 875, 0 900
+                     C 25 925, 75 975, 0 1000
+                     L 0 0 Z" 
+                  fill="hsl(var(--background))"
                 />
               </svg>
             </div>
-            <ScrollArea className="flex-1 p-6 lg:p-12 lg:pr-24">
+            <ScrollArea className="flex-1 p-6 lg:p-12 lg:pr-28">
               <div className="max-w-2xl mx-auto animate-fade-in">
                 <h2 className="text-3xl font-bold mb-8">{episode.title}</h2>
                 
@@ -429,31 +480,33 @@ export default function NovelReader() {
       </Dialog>
 
       <Dialog open={showAdmin} onOpenChange={setShowAdmin}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-7xl max-h-[90vh]">
           <DialogHeader>
-            <DialogTitle>Управление эпизодами</DialogTitle>
+            <DialogTitle>Визуальный редактор эпизодов</DialogTitle>
           </DialogHeader>
           
-          <div className="grid lg:grid-cols-[300px_1fr] gap-6 mt-4">
+          <div className="grid lg:grid-cols-[250px_1fr] gap-6 mt-4 h-[calc(90vh-8rem)]">
             <div className="space-y-4">
-              <Button onClick={addNewEpisode} className="w-full">
-                <Icon name="Plus" size={20} />
+              <Button onClick={addNewEpisode} className="w-full" size="sm">
+                <Icon name="Plus" size={18} />
                 Новый эпизод
               </Button>
               
-              <ScrollArea className="h-[500px]">
-                <div className="space-y-2">
-                  {episodes.map((ep, idx) => (
+              <ScrollArea className="h-[calc(100%-3rem)]">
+                <div className="space-y-2 pr-2">
+                  {episodes.map((ep) => (
                     <Card 
                       key={ep.id}
-                      className={`p-3 cursor-pointer transition-colors ${
-                        editingEpisode?.id === ep.id ? 'bg-primary/20 border-primary' : 'hover:bg-accent/50'
+                      className={`p-3 cursor-pointer transition-all ${
+                        editingEpisodeId === ep.id 
+                          ? 'bg-primary/20 border-primary shadow-lg' 
+                          : 'hover:bg-accent/50 hover:border-primary/50'
                       }`}
-                      onClick={() => setEditingEpisode(ep)}
+                      onClick={() => setEditingEpisodeId(ep.id)}
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">{ep.title}</p>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{ep.title}</p>
                           <p className="text-xs text-muted-foreground mt-1">
                             {ep.paragraphs.length} параграфов
                           </p>
@@ -461,10 +514,12 @@ export default function NovelReader() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-6 w-6"
+                          className="h-6 w-6 shrink-0"
                           onClick={(e) => {
                             e.stopPropagation();
-                            deleteEpisode(ep.id);
+                            if (confirm('Удалить этот эпизод?')) {
+                              deleteEpisode(ep.id);
+                            }
                           }}
                         >
                           <Icon name="Trash2" size={14} />
@@ -477,96 +532,150 @@ export default function NovelReader() {
             </div>
 
             {editingEpisode && (
-              <div className="space-y-6">
-                <div className="space-y-4">
-                  <div>
-                    <Label>Название эпизода</Label>
-                    <Input
-                      value={editingEpisode.title}
-                      onChange={(e) => updateEpisode(editingEpisode.id, { title: e.target.value })}
-                      placeholder="Глава 1. Название"
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Фоновое изображение (URL)</Label>
-                    <Input
-                      value={editingEpisode.backgroundImage || ''}
-                      onChange={(e) => updateEpisode(editingEpisode.id, { backgroundImage: e.target.value })}
-                      placeholder="https://..."
-                    />
-                  </div>
-                </div>
-
-                <div className="border-t pt-6">
-                  <h3 className="font-bold mb-4">Параграфы</h3>
-                  
-                  <div className="space-y-4 mb-6">
-                    {editingEpisode.paragraphs.map((par, idx) => (
-                      <Card key={par.id} className="p-4">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-primary mb-2">
-                              Параграф {idx + 1} ({par.type === 'text' ? 'Текст' : 'Диалог'})
-                            </p>
-                            <p className="text-sm text-muted-foreground line-clamp-2">
-                              {typeof par.content === 'string' ? par.content : 'Диалог...'}
-                            </p>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => deleteParagraph(editingEpisode.id, par.id)}
-                          >
-                            <Icon name="Trash2" size={16} />
-                          </Button>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-
-                  <Card className="p-4 bg-accent/20">
-                    <h4 className="font-medium mb-4">Добавить параграф</h4>
-                    
+              <ScrollArea className="h-full">
+                <div className="space-y-6 pr-4">
+                  <Card className="p-6 bg-accent/20">
+                    <h3 className="font-bold mb-4">Настройки эпизода</h3>
                     <div className="space-y-4">
                       <div>
-                        <Label>Тип параграфа</Label>
-                        <Select value={newParagraphType} onValueChange={(v) => setNewParagraphType(v as 'text' | 'dialog')}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="text">Текст</SelectItem>
-                            <SelectItem value="dialog">Диалог</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Label>Содержание</Label>
-                        <Textarea
-                          value={newParagraphContent}
-                          onChange={(e) => setNewParagraphContent(e.target.value)}
-                          placeholder="Введите текст параграфа..."
-                          rows={4}
+                        <Label>Название</Label>
+                        <Input
+                          value={editingEpisode.title}
+                          onChange={(e) => updateEpisode(editingEpisode.id, { title: e.target.value })}
+                          placeholder="Глава 1. Название"
                         />
                       </div>
 
                       <div>
-                        <Label>Изображение (URL, опционально)</Label>
+                        <Label>Фоновое изображение (URL)</Label>
                         <Input
-                          value={newParagraphImage}
-                          onChange={(e) => setNewParagraphImage(e.target.value)}
+                          value={editingEpisode.backgroundImage || ''}
+                          onChange={(e) => updateEpisode(editingEpisode.id, { backgroundImage: e.target.value })}
                           placeholder="https://..."
                         />
+                        {editingEpisode.backgroundImage && (
+                          <img 
+                            src={editingEpisode.backgroundImage} 
+                            alt="Preview" 
+                            className="mt-2 w-full h-32 object-cover rounded"
+                          />
+                        )}
                       </div>
-
-                      <Button onClick={() => addParagraphToEpisode(editingEpisode.id)} className="w-full">
-                        <Icon name="Plus" size={20} />
-                        Добавить параграф
-                      </Button>
                     </div>
                   </Card>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-bold">Параграфы</h3>
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => addParagraph(editingEpisode.id, 'text')}
+                        >
+                          <Icon name="Type" size={16} />
+                          Текст
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => addParagraph(editingEpisode.id, 'dialog')}
+                        >
+                          <Icon name="MessageCircle" size={16} />
+                          Диалог
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      {editingEpisode.paragraphs.length === 0 ? (
+                        <Card className="p-8 text-center text-muted-foreground">
+                          <Icon name="FileText" size={48} className="mx-auto mb-4 opacity-50" />
+                          <p>Нет параграфов. Добавьте текст или диалог.</p>
+                        </Card>
+                      ) : (
+                        editingEpisode.paragraphs.map((par, idx) => (
+                          <Card 
+                            key={par.id}
+                            className="p-4 cursor-move hover:shadow-md transition-shadow"
+                            draggable
+                            onDragStart={() => handleDragStart(par.id)}
+                            onDragOver={handleDragOver}
+                            onDrop={() => handleDrop(editingEpisode.id, idx)}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="mt-1">
+                                <Icon name="GripVertical" size={20} className="text-muted-foreground" />
+                              </div>
+                              
+                              <div className="flex-1 space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <Icon 
+                                      name={par.type === 'text' ? 'Type' : 'MessageCircle'} 
+                                      size={16} 
+                                      className="text-primary"
+                                    />
+                                    <span className="text-xs font-medium text-primary">
+                                      {par.type === 'text' ? 'Текст' : 'Диалог'} #{idx + 1}
+                                    </span>
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => {
+                                      if (confirm('Удалить параграф?')) {
+                                        deleteParagraph(editingEpisode.id, par.id);
+                                      }
+                                    }}
+                                  >
+                                    <Icon name="Trash2" size={16} />
+                                  </Button>
+                                </div>
+
+                                {par.type === 'text' && (
+                                  <Textarea
+                                    value={par.content as string}
+                                    onChange={(e) => updateParagraph(editingEpisode.id, par.id, { content: e.target.value })}
+                                    placeholder="Текст параграфа..."
+                                    rows={3}
+                                    className="resize-none"
+                                  />
+                                )}
+
+                                <div>
+                                  <Label className="text-xs">Изображение (опционально)</Label>
+                                  <Input
+                                    value={par.image || ''}
+                                    onChange={(e) => updateParagraph(editingEpisode.id, par.id, { image: e.target.value })}
+                                    placeholder="https://..."
+                                    className="mt-1"
+                                  />
+                                  {par.image && (
+                                    <img 
+                                      src={par.image} 
+                                      alt="Preview" 
+                                      className="mt-2 w-full h-24 object-cover rounded"
+                                    />
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </Card>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </ScrollArea>
+            )}
+
+            {!editingEpisode && (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center text-muted-foreground">
+                  <Icon name="ArrowLeft" size={48} className="mx-auto mb-4 opacity-50" />
+                  <p>Выберите эпизод для редактирования</p>
                 </div>
               </div>
             )}

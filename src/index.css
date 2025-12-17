@@ -67,3 +67,18 @@
     font-family: "Montserrat", sans-serif;
   }
 }
+
+.wave-divider {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: 0;
+  width: 120px;
+  overflow: visible;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.wave-divider path {
+  filter: drop-shadow(2px 0 8px rgba(0, 0, 0, 0.3));
+}
