@@ -6,6 +6,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import Icon from '@/components/ui/icon';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Character {
   id: string;
@@ -41,6 +45,71 @@ export default function NovelReader() {
   const [bookmarks, setBookmarks] = useState<{ episodeId: string; paragraphId: string; note: string }[]>([]);
   const [showCharacters, setShowCharacters] = useState(false);
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
+  const [showAdmin, setShowAdmin] = useState(false);
+  const [episodes, setEpisodes] = useState<Episode[]>([
+    {
+      id: '1',
+      title: 'Глава 1. Фестиваль фонарей',
+      backgroundImage: 'https://cdn.poehali.dev/files/u3875968173_quote_background_close-up_of_japanese_lanterns_wi_7076d7a0-fe3b-4374-aa35-93e85d6c7fe8_0.png',
+      paragraphs: [
+        {
+          id: '1-1',
+          type: 'text',
+          content: 'Вечерний город оживал под светом тысячи бумажных фонарей. Красные, розовые, золотые — они покачивались на ветру, словно морские медузы в невидимых течениях.',
+          image: 'https://cdn.poehali.dev/files/u3875968173_quote_background_close-up_of_japanese_lanterns_wi_7076d7a0-fe3b-4374-aa35-93e85d6c7fe8_0.png'
+        },
+        {
+          id: '1-2',
+          type: 'dialog',
+          content: [
+            {
+              characterId: '1',
+              text: 'Как же красиво! Я всю жизнь мечтала увидеть этот фестиваль.',
+              emotion: 'happy'
+            }
+          ]
+        },
+        {
+          id: '1-3',
+          type: 'text',
+          content: 'Запах жареных каштанов и сладкой ваты смешивался с ароматом весенних цветов. Толпа медленно двигалась по узким улочкам, освещённым мягким сиянием фонарей.'
+        },
+        {
+          id: '1-4',
+          type: 'dialog',
+          content: [
+            {
+              characterId: '2',
+              text: 'Каждый фонарь — это чья-то мечта, запущенная в небо.',
+              emotion: 'neutral'
+            },
+            {
+              characterId: '1',
+              text: 'Тогда мне нужно загадать самое важное желание...',
+              emotion: 'shy'
+            }
+          ]
+        }
+      ]
+    },
+    {
+      id: '2',
+      title: 'Глава 2. Первая встреча',
+      backgroundImage: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1200&h=800&fit=crop',
+      paragraphs: [
+        {
+          id: '2-1',
+          type: 'text',
+          content: 'На следующее утро Анна отправилась исследовать окрестности. Узкие улочки вели к скалистому берегу, где старый маяк возвышался над бирюзовыми волнами.'
+        }
+      ]
+    }
+  ]);
+
+  const [editingEpisode, setEditingEpisode] = useState<Episode | null>(null);
+  const [newParagraphType, setNewParagraphType] = useState<'text' | 'dialog'>('text');
+  const [newParagraphContent, setNewParagraphContent] = useState('');
+  const [newParagraphImage, setNewParagraphImage] = useState('');
 
   const characters: Character[] = [
     {
@@ -65,73 +134,12 @@ export default function NovelReader() {
     }
   ];
 
-  const episodes: Episode[] = [
-    {
-      id: '1',
-      title: 'Глава 1. Прибытие',
-      backgroundImage: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&h=800&fit=crop',
-      paragraphs: [
-        {
-          id: '1-1',
-          type: 'text',
-          content: 'Старый автобус остановился на пыльной площади маленького прибрежного городка. Анна вышла последней, сжимая в руках потрёртый чемодан и папку с набросками.',
-          image: 'https://images.unsplash.com/photo-1464207687429-7505649dae38?w=800&h=600&fit=crop'
-        },
-        {
-          id: '1-2',
-          type: 'dialog',
-          content: [
-            {
-              characterId: '1',
-              text: 'Наконец-то... Так долго мечтала оказаться здесь.',
-              emotion: 'happy'
-            }
-          ]
-        },
-        {
-          id: '1-3',
-          type: 'text',
-          content: 'Солнце клонилось к закату, окрашивая небо в оттенки розового и золотого. Запах моря смешивался с ароматом цветущих олеандров.'
-        },
-        {
-          id: '1-4',
-          type: 'dialog',
-          content: [
-            {
-              characterId: '2',
-              text: 'Новенькая в городе? Здесь редко бывают туристы в это время года.',
-              emotion: 'neutral'
-            },
-            {
-              characterId: '1',
-              text: 'Я не туристка. Приехала работать... рисовать.',
-              emotion: 'shy'
-            }
-          ]
-        }
-      ]
-    },
-    {
-      id: '2',
-      title: 'Глава 2. Первая встреча',
-      backgroundImage: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1200&h=800&fit=crop',
-      paragraphs: [
-        {
-          id: '2-1',
-          type: 'text',
-          content: 'На следующее утро Анна отправилась исследовать окрестности. Узкие улочки вели к скалистому берегу, где старый маяк возвышался над бирюзовыми волнами.'
-        }
-      ]
-    }
-  ];
-
   const episode = episodes[currentEpisode];
   const paragraph = episode.paragraphs[currentParagraph];
 
   const getCharacter = (id: string) => characters.find(c => c.id === id);
 
   const toggleBookmark = () => {
-    const bookmarkKey = `${episode.id}-${paragraph.id}`;
     const exists = bookmarks.find(b => b.episodeId === episode.id && b.paragraphId === paragraph.id);
     
     if (exists) {
@@ -165,6 +173,66 @@ export default function NovelReader() {
     }
   };
 
+  const addNewEpisode = () => {
+    const newEpisode: Episode = {
+      id: `${episodes.length + 1}`,
+      title: `Глава ${episodes.length + 1}. Новая глава`,
+      backgroundImage: 'https://cdn.poehali.dev/files/u3875968173_quote_background_close-up_of_japanese_lanterns_wi_7076d7a0-fe3b-4374-aa35-93e85d6c7fe8_0.png',
+      paragraphs: []
+    };
+    setEpisodes([...episodes, newEpisode]);
+    setEditingEpisode(newEpisode);
+  };
+
+  const updateEpisode = (episodeId: string, updates: Partial<Episode>) => {
+    setEpisodes(episodes.map(ep => 
+      ep.id === episodeId ? { ...ep, ...updates } : ep
+    ));
+  };
+
+  const deleteEpisode = (episodeId: string) => {
+    setEpisodes(episodes.filter(ep => ep.id !== episodeId));
+    setEditingEpisode(null);
+  };
+
+  const addParagraphToEpisode = (episodeId: string) => {
+    if (!newParagraphContent.trim()) return;
+
+    const newParagraph: Paragraph = {
+      id: `${episodeId}-${Date.now()}`,
+      type: newParagraphType,
+      content: newParagraphType === 'text' ? newParagraphContent : [],
+      image: newParagraphImage || undefined
+    };
+
+    const updatedEpisodes = episodes.map(ep => {
+      if (ep.id === episodeId) {
+        return {
+          ...ep,
+          paragraphs: [...ep.paragraphs, newParagraph]
+        };
+      }
+      return ep;
+    });
+
+    setEpisodes(updatedEpisodes);
+    setNewParagraphContent('');
+    setNewParagraphImage('');
+  };
+
+  const deleteParagraph = (episodeId: string, paragraphId: string) => {
+    const updatedEpisodes = episodes.map(ep => {
+      if (ep.id === episodeId) {
+        return {
+          ...ep,
+          paragraphs: ep.paragraphs.filter(p => p.id !== paragraphId)
+        };
+      }
+      return ep;
+    });
+    setEpisodes(updatedEpisodes);
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
@@ -172,6 +240,10 @@ export default function NovelReader() {
           <h1 className="text-xl font-bold">История одного лета</h1>
           
           <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => setShowAdmin(true)}>
+              <Icon name="Settings" size={20} />
+            </Button>
+
             <Button variant="ghost" size="icon" onClick={toggleBookmark}>
               <Icon name={isBookmarked ? "Bookmark" : "BookmarkPlus"} size={20} />
             </Button>
@@ -352,6 +424,152 @@ export default function NovelReader() {
                 )}
               </Card>
             ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showAdmin} onOpenChange={setShowAdmin}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Управление эпизодами</DialogTitle>
+          </DialogHeader>
+          
+          <div className="grid lg:grid-cols-[300px_1fr] gap-6 mt-4">
+            <div className="space-y-4">
+              <Button onClick={addNewEpisode} className="w-full">
+                <Icon name="Plus" size={20} />
+                Новый эпизод
+              </Button>
+              
+              <ScrollArea className="h-[500px]">
+                <div className="space-y-2">
+                  {episodes.map((ep, idx) => (
+                    <Card 
+                      key={ep.id}
+                      className={`p-3 cursor-pointer transition-colors ${
+                        editingEpisode?.id === ep.id ? 'bg-primary/20 border-primary' : 'hover:bg-accent/50'
+                      }`}
+                      onClick={() => setEditingEpisode(ep)}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">{ep.title}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {ep.paragraphs.length} параграфов
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteEpisode(ep.id);
+                          }}
+                        >
+                          <Icon name="Trash2" size={14} />
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+
+            {editingEpisode && (
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <div>
+                    <Label>Название эпизода</Label>
+                    <Input
+                      value={editingEpisode.title}
+                      onChange={(e) => updateEpisode(editingEpisode.id, { title: e.target.value })}
+                      placeholder="Глава 1. Название"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Фоновое изображение (URL)</Label>
+                    <Input
+                      value={editingEpisode.backgroundImage || ''}
+                      onChange={(e) => updateEpisode(editingEpisode.id, { backgroundImage: e.target.value })}
+                      placeholder="https://..."
+                    />
+                  </div>
+                </div>
+
+                <div className="border-t pt-6">
+                  <h3 className="font-bold mb-4">Параграфы</h3>
+                  
+                  <div className="space-y-4 mb-6">
+                    {editingEpisode.paragraphs.map((par, idx) => (
+                      <Card key={par.id} className="p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-primary mb-2">
+                              Параграф {idx + 1} ({par.type === 'text' ? 'Текст' : 'Диалог'})
+                            </p>
+                            <p className="text-sm text-muted-foreground line-clamp-2">
+                              {typeof par.content === 'string' ? par.content : 'Диалог...'}
+                            </p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => deleteParagraph(editingEpisode.id, par.id)}
+                          >
+                            <Icon name="Trash2" size={16} />
+                          </Button>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+
+                  <Card className="p-4 bg-accent/20">
+                    <h4 className="font-medium mb-4">Добавить параграф</h4>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <Label>Тип параграфа</Label>
+                        <Select value={newParagraphType} onValueChange={(v) => setNewParagraphType(v as 'text' | 'dialog')}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="text">Текст</SelectItem>
+                            <SelectItem value="dialog">Диалог</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label>Содержание</Label>
+                        <Textarea
+                          value={newParagraphContent}
+                          onChange={(e) => setNewParagraphContent(e.target.value)}
+                          placeholder="Введите текст параграфа..."
+                          rows={4}
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Изображение (URL, опционально)</Label>
+                        <Input
+                          value={newParagraphImage}
+                          onChange={(e) => setNewParagraphImage(e.target.value)}
+                          placeholder="https://..."
+                        />
+                      </div>
+
+                      <Button onClick={() => addParagraphToEpisode(editingEpisode.id)} className="w-full">
+                        <Icon name="Plus" size={20} />
+                        Добавить параграф
+                      </Button>
+                    </div>
+                  </Card>
+                </div>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
